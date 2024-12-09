@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String          @id @default(cuid())
+  firstName     String?
+  lastName      String?
+  address       String?
+  email         String          @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  // Optional for WebAuthn support
+  Authenticator Authenticator[]
+  invoices      Invoice[]
+  partners      Partner[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// Optional for WebAuthn support
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}
+
+model Invoice {
+  id String @id @default(uuid())
+
+  invoiceName   String
+  total         Int
+  status        InvoiceStatus
+  date          DateTime
+  dueDate       Int
+  fromName      String
+  fromEmail     String
+  fromAddress   String
+  clientName    String
+  clientEmail   String
+  clientAddress String
+  currency      String
+  invoiceNumber Int
+  note          String?
+
+  invoiceItemDescription String
+  invoiceItemQuantity    Int
+  invoiceItemRate        Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?
+}
+
+model Partner {
+  id String @id @default(uuid())
+
+  applicantName   String
+  fatherName      String
+  fatherMobile    String
+  motherName      String
+  motherMobile    String
+  dob             DateTime
+  gender          String
+  maritalStatus   String
+  panUpload       String?
+  educationUpload String?
+  photoUpload     String?
+  status          PartnerStatus
+
+  address  String
+  address1 String?
+  city     String
+  pinCode  Int
+  state    String
+  mobile   Int
+  email    String
+
+  bankName    String
+  accountNo   String
+  ifsc        String
+  accountType String
+
+  bankUpload   String?
+  aadharUpload String?
+  chequeUpload String?
+
+  education    String
+  workSpace    String
+  active       Boolean
+  socialMedia  String
+  connectivity String
+
+  table          String
+  chair          String
+  printer        String
+  waterDispenser String
+  refrigerator   String
+  employee       String
+  cabinets       String
+  officeSize     String
+  officeType     String
+  consent        Boolean
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String?
+  User      User?    @relation(fields: [userId], references: [id])
+}
+
+enum InvoiceStatus {
+  PAID
+  PENDING
+}
+
+enum PartnerStatus {
+  PENDING
+  ACCEPT
+  REJECT
+}
